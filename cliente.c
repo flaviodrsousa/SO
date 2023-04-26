@@ -56,16 +56,3 @@ int main(int argc, char const *argv[]){
     close(fifo);
     return 0;
 }
-
-/* fifo = open("./fifoFim", O_WRONLY, 0666); //abre o fifo em modo de escrita
-
-    
-    StructFim estruturaFim;//criar a struct
-
-    struct timeval fim; 
-    estruturaFim.tempo=gettimeofday(&fim, NULL);
-    estruturaFim.pid=getpid();
-
-    write(fifo,&estruturaFim, sizeof(StructFim)); //SAME CENA DO IF
-
-    close(fifo); */

@@ -4,3 +4,6 @@ c*
 
 s*
 !servidor.c
+
+*.out
+*.exe

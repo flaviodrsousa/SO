@@ -9,33 +9,34 @@
 typedef struct {
     double tempo; //em milisegundos
     pid_t pid;
-    char programa[15];
-} *Inicio;
+    char programa[2];
+} *Inicio,StructInicio;
 
 typedef struct {
     double tempo; //em milisegundos
     pid_t pid;
-} *Fim;
+} *Fim,StructFim;
 
 int main(int argc, char const *argv[]){
-    int fifoInicio = mkfifo("./fifoInicio", 0666); //cria o fifo
-    int fifoFim = mkfifo("./fifoFim", 0666); //cria o fifo
+    StructInicio estruturaInicio;//criar a struct
+    StructFim estruturaFim;//criar a struct
+
+    int fifo = mkfifo("./fifo", 0666); //cria o fifo
     
-    fifoInicio = open("./fifoInicio", O_RDONLY, 0666); //abre o fifo
-    int fifonotEndofFileInicio = open("./fifoInicio", O_WRONLY, 0666); //para não termos end of file no read
-    int fifonotEndofFileFim = open("./fifoFim", O_WRONLY, 0666); //para não termos end of file no read
-
     while(1) { //ciclo infinito
-        ssize_t SizeRead = 0; //tamanho que consegui ler, pode ser menor que o SizeBuffer.
-        Inicio clienteInicio;
+        int fd_fifo = open("./fifo", O_RDONLY, 0666); //abre o fifo
 
-        while((SizeRead = read(fifoInicio, clienteInicio, sizeof(Inicio))) > 0) { //le do fifo e escreve no buffer
-            printf("%s\n",clienteInicio->programa);
-            write(1, clienteInicio->programa, sizeof(clienteInicio->programa)); //escreve no stdout o conteudo do buffer
-        }
+        int escolhe_strcut;
+        read(fd_fifo, &escolhe_strcut, sizeof(int));
+            if(escolhe_strcut==0){
+                read(fd_fifo, &estruturaInicio, sizeof(StructInicio));
+                write(1, &estruturaInicio.programa, sizeof(char)*2);
+            }else{
+                read(fd_fifo, &estruturaFim, sizeof(StructFim));
+            }
+        
+        close(fd_fifo);
     }
-    close(fifoInicio);
-    close(fifonotEndofFileInicio);
 
     return 0;
 }

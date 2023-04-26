@@ -11,29 +11,28 @@
 typedef struct {
     double tempo; //em milisegundos
     pid_t pid;
-    char programa[15];
-} *Inicio;
+    char programa[2];
+} *Inicio,StructInicio;
 
 typedef struct {
     double tempo; //em milisegundos
     pid_t pid;
-} *Fim;
+} *Fim,StructFim;
 
 int main(int argc, char const *argv[]){
-    Inicio clienteInicio=malloc(sizeof(Inicio));//Make function time (begining of the function)
+    int escolhe_struct=0;
+    StructInicio estruturaInicio;//criar a struct
 
     struct timeval inicio; 
-    clienteInicio->tempo=gettimeofday(&inicio, NULL);
-    clienteInicio->pid=getpid();
-    strcpy(clienteInicio->programa,argv[3]);
+    estruturaInicio.tempo=gettimeofday(&inicio, NULL);
+    estruturaInicio.pid=getpid();
+    strcpy(estruturaInicio.programa,argv[3]);
+    
 
     int fifo = open("./fifoInicio", O_WRONLY, 0666); //abre o fifo em modo de escrita
 
-    if(write(fifo, clienteInicio, sizeof(Inicio))==-1){
-        perror("write client error"); //PERGUNTAR AO GOSTOSO
-    }
-
-    close(fifo);
+    write(fifo, &escolhe_struct, sizeof(int));
+    write(fifo, &estruturaInicio, sizeof(StructInicio));//TIREI A CENA DO IF
 
     int status;
     if (fork()==0){
@@ -43,18 +42,30 @@ int main(int argc, char const *argv[]){
 
     wait(&status);
 
-    fifo = open("./fifo", O_WRONLY, 0666); //abre o fifo em modo de escrita
+    StructFim estruturaFim;//criar a struct
 
-    Fim clienteFinal=malloc(sizeof(Fim)); 
-
+    escolhe_struct=1;
     struct timeval fim; 
-    clienteFinal->tempo=gettimeofday(&fim, NULL);
-    clienteFinal->pid=getpid();
+    estruturaFim.tempo=gettimeofday(&fim, NULL);
+    estruturaFim.pid=getpid();
 
-    if(write(fifo, clienteFinal, sizeof(Fim))==-1){
-        perror("write client error"); //PERGUNTAR AO GOSTOSO
-    }
+    write(fifo, &escolhe_struct, sizeof(int));
+    write(fifo,&estruturaFim, sizeof(StructFim));
 
+    
     close(fifo);
     return 0;
 }
+
+/* fifo = open("./fifoFim", O_WRONLY, 0666); //abre o fifo em modo de escrita
+
+    
+    StructFim estruturaFim;//criar a struct
+
+    struct timeval fim; 
+    estruturaFim.tempo=gettimeofday(&fim, NULL);
+    estruturaFim.pid=getpid();
+
+    write(fifo,&estruturaFim, sizeof(StructFim)); //SAME CENA DO IF
+
+    close(fifo); */

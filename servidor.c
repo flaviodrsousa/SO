@@ -30,7 +30,7 @@ int main(int argc, char const *argv[]){
         read(fd_fifo, &escolhe_strcut, sizeof(int));
             if(escolhe_strcut==0){
                 read(fd_fifo, &estruturaInicio, sizeof(StructInicio));
-                write(1, &estruturaInicio.programa, sizeof(char)*2);
+                write(1, &estruturaInicio.programa, sizeof(estruturaInicio.programa));
             }else{
                 read(fd_fifo, &estruturaFim, sizeof(StructFim));
             }

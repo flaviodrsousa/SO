@@ -28,8 +28,7 @@ int main(int argc, char const *argv[]){
     estruturaInicio.pid=getpid();
     strcpy(estruturaInicio.programa,argv[3]);
     
-
-    int fifo = open("./fifoInicio", O_WRONLY, 0666); //abre o fifo em modo de escrita
+    int fifo = open("./fifo", O_WRONLY, 0666); //abre o fifo em modo de escrita
 
     write(fifo, &escolhe_struct, sizeof(int));
     write(fifo, &estruturaInicio, sizeof(StructInicio));//TIREI A CENA DO IF

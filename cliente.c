@@ -9,13 +9,13 @@
 #include <string.h>
 
 typedef struct {
-    double tempo; //em milisegundos
+    struct timeval tempo; //em milisegundos
     pid_t pid;
     char programa[2];
 } *Inicio,StructInicio;
 
 typedef struct {
-    double tempo; //em milisegundos
+    struct timeval tempo; //em milisegundos
     pid_t pid;
 } *Fim,StructFim;
 
@@ -23,8 +23,7 @@ int main(int argc, char const *argv[]){
     int escolhe_struct=0;
     StructInicio estruturaInicio;//criar a struct
 
-    struct timeval inicio; 
-    estruturaInicio.tempo=gettimeofday(&inicio, NULL);
+    gettimeofday(&estruturaInicio.tempo, NULL);
     estruturaInicio.pid=getpid();
     strcpy(estruturaInicio.programa,argv[3]);
     
@@ -32,6 +31,12 @@ int main(int argc, char const *argv[]){
 
     write(fifo, &escolhe_struct, sizeof(int));
     write(fifo, &estruturaInicio, sizeof(StructInicio));//TIREI A CENA DO IF
+
+    //PARA TESTAR O HISTORICO
+    escolhe_struct=2;
+    write(fifo, &escolhe_struct, sizeof(int));
+    //ACABOU 
+
 
     int status;
     if (fork()==0){
@@ -44,8 +49,7 @@ int main(int argc, char const *argv[]){
     StructFim estruturaFim;//criar a struct
 
     escolhe_struct=1;
-    struct timeval fim; 
-    estruturaFim.tempo=gettimeofday(&fim, NULL);
+    gettimeofday(&estruturaFim.tempo, NULL);
     estruturaFim.pid=getpid();
 
     write(fifo, &escolhe_struct, sizeof(int));

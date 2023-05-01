@@ -7,5 +7,6 @@ s*
 
 *.out
 *.exe
+*.txt
 
 fifo

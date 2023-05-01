@@ -31,19 +31,19 @@ int main(int argc, char const *argv[]){
     while(1) { //ciclo infinito
         int fd_fifo = open("./fifo", O_RDONLY, 0666); //abre o fifo
 
-        int escolhe_strcut;
-        read(fd_fifo, &escolhe_strcut, sizeof(int));
-            if(escolhe_strcut==0){
+        int Switch;
+        read(fd_fifo, &Switch, sizeof(int));
+            if(Switch==0){
                 int fd_txt = open("./txt.txt",O_WRONLY);
                 read(fd_fifo, &estruturaInicio, sizeof(StructInicio));
                 write(fd_txt, &estruturaInicio, sizeof(StructInicio));
                 close(fd_txt);
-            }else if(escolhe_strcut==1){
+            }else if(Switch==1){
                 int bytes_lidos;
                 read(fd_fifo, &estruturaFim, sizeof(StructFim));
                 //Quando acaba temos de remover a struct do historico
                 int fd_txt = open("./txt.txt",O_RDONLY);
-                int fd_aux = open("./txt.txt",O_TRUNC|O_WRONLY);
+                int fd_aux = open("./aux.txt",O_TRUNC|O_WRONLY);
                 //Faz uma copia para outro ficheiro do historico sem o que se tem de retirar
                 while(bytes_lidos=(read(fd_txt,&estruturaInicio,sizeof(StructInicio)))>0){
                     if(estruturaFim.pid!=estruturaInicio.pid){
@@ -54,9 +54,9 @@ int main(int argc, char const *argv[]){
                 close(fd_aux);
                 //Copia do auxiliar para o historico
                 fd_txt = open("./txt.txt",O_TRUNC|O_WRONLY);
-                fd_aux = open("./txt.txt",O_RDONLY);
+                fd_aux = open("./aux.txt",O_RDONLY);
                 while(bytes_lidos=(read(fd_aux,&estruturaInicio,sizeof(StructInicio)))>0){
-                      write(fd_aux, &estruturaInicio, sizeof(StructInicio));
+                      write(fd_txt, &estruturaInicio, sizeof(StructInicio));
                 }
                 close(fd_txt);
                 close(fd_aux);
@@ -65,17 +65,22 @@ int main(int argc, char const *argv[]){
                 int bytes_lidos;
                 while(bytes_lidos=(read(fd_txt,&estruturaInicio,sizeof(StructInicio)))>0){
                     char output[20]={};
-                    sprintf(output,"pid:%d ",estruturaInicio.pid);//Formata a string num buffer
+                    sprintf(output,"Pid:%d ",estruturaInicio.pid);//Formata a string num buffer
                     write(1,output,20);
 
                     struct timeval fim; 
                     gettimeofday(&fim, NULL);
                     int secs = (double)(fim.tv_usec - estruturaInicio.tempo.tv_usec) / 1000000 + (double)(fim.tv_sec - estruturaInicio.tempo.tv_sec);
-                    printf("Tempo em execussao: %d\n", secs);
-                    write(1,output,20);
+                    char output2[40]={};
+                    sprintf(output2,"Tempo em execucao:%d ", secs);
+                    write(1,output2,20);
 
-                    sprintf(output,"programa:%s ",estruturaInicio.programa);//Formata a string num buffer
-                    write(1,output,20);
+                    char output3[20]={};
+                    sprintf(output3,"Programa:%s ",estruturaInicio.programa);//Formata a string num buffer
+                    write(1,output3,20);
+
+                    char paragrafro='\n';
+                    write(1,&paragrafro,sizeof(char));
                 }
                 close(fd_txt);
 

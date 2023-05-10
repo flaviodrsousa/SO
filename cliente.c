@@ -98,25 +98,26 @@ int main(int argc, char *argv[]){
     }else if(argc>1 && !strcmp(argv[1],"stats-time")){
         //No servidor vamos usar a opcao 2
         escolhe_struct=2;
-        int fifo = open("./fifo", O_WRONLY, 0666); //abre o fifo em modo de escrita
-        write(fifo, &escolhe_struct, sizeof(int));
+        int fd_fifo = open("./fifo", O_WRONLY, 0666); //abre o fifo em modo de escrita
+        write(fd_fifo, &escolhe_struct, sizeof(int));
 
         //cria o fifo com nome e manda para o servidor o nome do mesmo
         char pipe[5]={};
         sprintf(pipe,"%i",getpid());//Cria o nome do pipe
+        printf("%s\n",pipe);
 
         int fifo_novo;
         if((fifo_novo = mkfifo(pipe, 0666))<0){
             perror("Erro\n"); //Pode dar erro se o fifo ja existir
         } 
 
+        //manda o nome do pipe para o servidor
+        write(fd_fifo, &pipe, sizeof(char)*5);
+        close(fd_fifo);
+
         //formatar o nome do pipe para os servidor
         char nome[7]={};
         sprintf(nome,"./%i",getpid());//Cria o nome do pipe
-
-        //manda o nome do pipe para o servidor
-        write(fifo, &nome, sizeof(char)*7);
-        close(fifo);
 
         //manda para o pipe especifico os argumentos
         int fd_fifo_novo = open(nome, O_WRONLY, 0666);
@@ -125,7 +126,9 @@ int main(int argc, char *argv[]){
         write(fd_fifo_novo, &numero_progs, sizeof(int)); 
         //Manda os varios programas a somar
         while(numero_progs>0){
-            write(fd_fifo_novo, &argv[numero_progs+1], sizeof(char)*5); //+1 = -2+1
+            char nome[8];
+            strcpy(nome,argv[numero_progs+1]);
+            write(fd_fifo_novo, nome, sizeof(char)*8); //+1 = -2+1
             numero_progs--;
         }
         close(fd_fifo_novo);

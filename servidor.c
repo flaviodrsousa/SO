@@ -39,8 +39,8 @@ int main(int argc, char const *argv[]){
     if((fifo = mkfifo("./fifo", 0666))<0){
         perror("Erro\n"); //Pode dar erro se o fifo ja existir
     } //cria o fifo
-    int fd_txt = open("./txt.txt",O_CREAT|O_TRUNC|O_RDWR, 0666);//Onde o historico é guardado
-    int fd_aux = open("./aux.txt",O_CREAT|O_TRUNC|O_RDWR, 0666);//Aux para fazer a atualizacao do historcio
+    int fd_txt = open("./txt.txt",O_CREAT|O_RDWR, 0666);//Onde o historico é guardado
+    int fd_aux = open("./aux.txt",O_CREAT|O_RDWR, 0666);//Aux para fazer a atualizacao do historcio
     close(fd_txt);
     close(fd_aux);
     
@@ -50,7 +50,7 @@ int main(int argc, char const *argv[]){
         
         if((read(fd_fifo, &escolhe_struct, sizeof(int)))>0){
             if(escolhe_struct==0){
-                int fd_txt = open("./txt.txt",O_WRONLY, 0666);
+                int fd_txt = open("./txt.txt",O_WRONLY|O_TRUNC, 0666);
                 read(fd_fifo, &estruturaInicio, sizeof(StructInicio));
                 write(fd_txt, &estruturaInicio, sizeof(StructInicio));
                 close(fd_txt);
@@ -59,7 +59,7 @@ int main(int argc, char const *argv[]){
                 read(fd_fifo, &estruturaFim, sizeof(StructFim));
                 //Quando acaba temos de remover a struct do historico
                 int fd_txt = open("./txt.txt",O_RDONLY, 0666);
-                int fd_aux = open("./aux.txt",O_TRUNC|O_WRONLY, 0666);
+                int fd_aux = open("./aux.txt",O_WRONLY, 0666);
                 //Faz uma copia para outro ficheiro do historico sem o que se tem de retirar
                 while(bytes_lidos=(read(fd_txt,&estruturaInicio,sizeof(StructInicio)))>0){
                     if(estruturaFim.pid!=estruturaInicio.pid){
@@ -84,7 +84,7 @@ int main(int argc, char const *argv[]){
                 close(fd_txt);
                 close(fd_aux);
                 //Copia do auxiliar para o historico
-                fd_txt = open("./txt.txt",O_TRUNC|O_WRONLY, 0666);
+                fd_txt = open("./txt.txt",O_WRONLY, 0666);
                 fd_aux = open("./txt.txt",O_RDONLY, 0666);
                 while(bytes_lidos=(read(fd_aux,&estruturaInicio,sizeof(StructInicio)))>0){
                       write(fd_txt, &estruturaInicio, sizeof(StructInicio));
@@ -97,10 +97,11 @@ int main(int argc, char const *argv[]){
                 char pipe[7]={};
                 read(fd_fifo, &pipe, sizeof(char)*7);
 
+
                 //Le os varios argumentos do fifo
                 float vezes_ocorre=0;
                 int bytes_lidos;
-                char programa[5]={};
+                char programa[8]={};
 
                 int fd_fifo_novo = open(pipe, O_RDONLY, 0666);
                 //Vai buscar o numero de argumentos
@@ -108,7 +109,7 @@ int main(int argc, char const *argv[]){
                 read(fd_fifo_novo, &num_prog, sizeof(int));
                 //Percorre os varios argumentos
                 while(num_prog>0){
-                    read(fd_fifo_novo,&programa,sizeof(char)*5);
+                    read(fd_fifo_novo,&programa,sizeof(char)*8);
                     //Ve qual o ficheiro que tem de abrir
                     char prog_acabado[30]={};
                     sprintf(prog_acabado,"%s/%s.txt",argv[1],programa);

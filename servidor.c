@@ -166,6 +166,57 @@ int main(int argc, char const *argv[]){
                 fd_fifo_novo = open(pipe, O_WRONLY, 0666);
                 write(fd_fifo_novo,&vezes_ocorre,sizeof(int));
                 close(fd_fifo_novo);
+
+            }else if(escolhe_struct==4){
+                //Le o pipe para onde tem de mandar
+                char pipe[7]={};
+                read(fd_fifo, &pipe, sizeof(char)*7);
+
+                //Le os varios argumentos do fifo
+                float tempo=0;
+                int bytes_lidos;
+                char programa[8]={};
+
+                int fd_fifo_novo = open(pipe, O_RDONLY, 0666);
+                //Vai buscar o numero de argumentos
+                int num_prog;
+                read(fd_fifo_novo, &num_prog, sizeof(int));
+                //Ve varios parametros
+                int programas_diferentes=0;
+                int encontrado=0;
+                char nome_diferentes[num_prog][8];
+                //Percorre os varios argumentos
+                while(num_prog>0){
+                    read(fd_fifo_novo,&programa,sizeof(char)*8);
+                    //Ve qual o ficheiro que tem de abrir
+                    char prog_acabado[30]={};
+                    sprintf(prog_acabado,"%s/%s.txt",argv[1],programa);
+                    //Abre o ficheiro e mete na struct
+                    int fd_prog_acabado=open(prog_acabado,O_RDONLY, 0666);
+                    read(fd_prog_acabado, &programaAcabado, sizeof(ProgramaTerminado));
+                    close(fd_prog_acabado);
+                    //ve se o programa passado como argumento ja existe na lista dos programas existente
+                    for(int i=0;i<programas_diferentes && encontrado==0;i++){
+                        if(!strcmp(programaAcabado.programa,nome_diferentes[i])) encontrado=1;
+                    }
+                    if(encontrado==0){
+                        strcpy(nome_diferentes[programas_diferentes],programaAcabado.programa);
+                        programas_diferentes++;
+                    }else{
+                        encontrado=0;
+                    }
+                    //para ir reduzindo o numero de programas a somar
+                    num_prog--;
+                }
+                close(fd_fifo_novo);
+                    
+                //Para mandar o tempo final para o cliente
+                fd_fifo_novo = open(pipe, O_WRONLY, 0666);
+                write(fd_fifo_novo,&programas_diferentes,sizeof(int));
+                for(int i=0;i<programas_diferentes;i++){
+                    write(fd_fifo_novo,nome_diferentes[i],sizeof(char)*8);
+                }
+                close(fd_fifo_novo);
             }
 
         }

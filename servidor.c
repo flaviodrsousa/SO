@@ -97,9 +97,8 @@ int main(int argc, char const *argv[]){
                 char pipe[7]={};
                 read(fd_fifo, &pipe, sizeof(char)*7);
 
-
                 //Le os varios argumentos do fifo
-                float vezes_ocorre=0;
+                float tempo=0;
                 int bytes_lidos;
                 char programa[8]={};
 
@@ -118,7 +117,7 @@ int main(int argc, char const *argv[]){
                     read(fd_prog_acabado, &programaAcabado, sizeof(ProgramaTerminado));
                     close(fd_prog_acabado);
                     //soma o tempo ao tempo total
-                    vezes_ocorre+=programaAcabado.tempo; 
+                    tempo+=programaAcabado.tempo; 
                     //para ir reduzindo o numero de programas a somar
                     num_prog--;
                 }
@@ -126,7 +125,7 @@ int main(int argc, char const *argv[]){
                     
                 //Para mandar o tempo final para o cliente
                 fd_fifo_novo = open(pipe, O_WRONLY, 0666);
-                write(fd_fifo_novo,&vezes_ocorre,sizeof(float));
+                write(fd_fifo_novo,&tempo,sizeof(float));
                 close(fd_fifo_novo);
 
             }else if(escolhe_struct==3){
@@ -136,18 +135,19 @@ int main(int argc, char const *argv[]){
 
                 //Le os varios argumentos do fifo
                 int vezes_ocorre=0;
-                char programa[5]={};
+                int bytes_lidos;
+                char programa[8]={};
 
                 int fd_fifo_novo = open(pipe, O_RDONLY, 0666);
                 //Vai buscar o numero de argumentos
                 int num_prog;
                 read(fd_fifo_novo, &num_prog, sizeof(int));
-                //Vai buscar o progama a compara
-                char prog_a_comparar[7]={};
-                read(fd_fifo_novo, &prog_a_comparar, sizeof(char)*7);
+                //Vai buscar o programa a comparar
+                char comando[8];
+                read(fd_fifo_novo, &comando, sizeof(char)*8);
                 //Percorre os varios argumentos
                 while(num_prog>0){
-                    read(fd_fifo_novo,&programa,sizeof(char)*5);
+                    read(fd_fifo_novo,&programa,sizeof(char)*8);
                     //Ve qual o ficheiro que tem de abrir
                     char prog_acabado[30]={};
                     sprintf(prog_acabado,"%s/%s.txt",argv[1],programa);
@@ -155,10 +155,8 @@ int main(int argc, char const *argv[]){
                     int fd_prog_acabado=open(prog_acabado,O_RDONLY, 0666);
                     read(fd_prog_acabado, &programaAcabado, sizeof(ProgramaTerminado));
                     close(fd_prog_acabado);
-                    //ve se o programa é do passado como argumento
-                    if(!strcmp(prog_a_comparar,programaAcabado.programa)){
-                        vezes_ocorre++; 
-                    }
+                    //soma o tempo ao tempo total
+                    if(!strcmp(programaAcabado.programa,comando)) vezes_ocorre++;
                     //para ir reduzindo o numero de programas a somar
                     num_prog--;
                 }

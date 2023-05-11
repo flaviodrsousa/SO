@@ -22,7 +22,6 @@ typedef struct {
 typedef struct{ //para guardar os ficheiros das structs terminadas
     float tempo;
     char programa[5];
-    
 }ProgramaTerminado;
 
 int mystrcmp(char *s1, char *s2){
@@ -38,7 +37,7 @@ int mystrcmp(char *s1, char *s2){
 }
 
 int main(int argc, char *argv[]){
-    int escolhe_struct=0;
+    int escolhe_opcao=0;
 
     if((argc>3 && !strcmp(argv[1],"execute")) && !strcmp(argv[2],"-u")){ //So faz no caso de ser execute -u ls l por exemplo
         StructInicio estruturaInicio;//criar a struct
@@ -48,7 +47,7 @@ int main(int argc, char *argv[]){
         strcpy(estruturaInicio.programa,argv[3]);
         
         int fifo = open("./fifo", O_WRONLY, 0666); //abre o fifo em modo de escrita
-        write(fifo, &escolhe_struct, sizeof(int));
+        write(fifo, &escolhe_opcao, sizeof(escolhe_opcao));
         write(fifo, &estruturaInicio, sizeof(StructInicio));//TIREI A CENA DO IF
         close(fifo);
 
@@ -62,12 +61,12 @@ int main(int argc, char *argv[]){
                     
         StructFim estruturaFim;//criar a struct
 
-        escolhe_struct=1;
+        escolhe_opcao=1;
         gettimeofday(&estruturaFim.tempo, NULL);
         estruturaFim.pid=getpid();
 
         fifo = open("./fifo", O_WRONLY, 0666); //abre o fifo em modo de escrita
-        write(fifo, &escolhe_struct, sizeof(int));
+        write(fifo, &escolhe_opcao, sizeof(escolhe_opcao));
         write(fifo,&estruturaFim, sizeof(StructFim));
         close(fifo);
 
@@ -75,31 +74,31 @@ int main(int argc, char *argv[]){
     }else if(argc==2 && !strcmp(argv[1],"status")){
         //PARA TESTAR O HISTORICO
         StructInicio estruturaInicio;//criar a struct
-        int fd_txt = open("./txt.txt",O_RDONLY,0666);
+        int fd_historico = open("./historico.txt",O_RDONLY,0666);
    
-        while((read(fd_txt,&estruturaInicio,sizeof(StructInicio)))>0){
+        while((read(fd_historico,&estruturaInicio,sizeof(StructInicio)))>0){
             char output1[20]={};
             sprintf(output1,"pid:%d ",estruturaInicio.pid);//Formata a string num buffer
-            write(1,output1,sizeof(char)*20);
+            write(1,output1,sizeof(output1));
 
             struct timeval fim; 
             char output2[40]={};
             gettimeofday(&fim, NULL);
             double secs = (double)(fim.tv_usec - estruturaInicio.tempo.tv_usec) / 1000000 + (double)(fim.tv_sec - estruturaInicio.tempo.tv_sec);
             float miliseg = secs*1000;
-            sprintf(output2,"Tempo em execussao:%.0f ", miliseg);
-            write(1,output2,sizeof(char)*40);
+            sprintf(output2,"Tempo em execução:%.0f ", miliseg);
+            write(1,output2,sizeof(output2));
 
             char output3[20]={};
             sprintf(output3,"programa:%s\n",estruturaInicio.programa);//Formata a string num buffer
-            write(1,output3,sizeof(char)*20);
+            write(1,output3,sizeof(output3));
         }
-        close(fd_txt);
+        close(fd_historico);
     }else if(argc>1 && !strcmp(argv[1],"stats-time")){
         //No servidor vamos usar a opcao 2
-        escolhe_struct=2;
+        escolhe_opcao=2;
         int fd_fifo = open("./fifo", O_WRONLY, 0666); //abre o fifo em modo de escrita
-        write(fd_fifo, &escolhe_struct, sizeof(int));
+        write(fd_fifo, &escolhe_opcao, sizeof(escolhe_opcao));
 
         //cria o fifo com nome e manda para o servidor o nome do mesmo
         char pipe[5]={};
@@ -107,11 +106,11 @@ int main(int argc, char *argv[]){
 
         int fifo_novo;
         if((fifo_novo = mkfifo(pipe, 0666))<0){
-            perror("Erro\n"); //Pode dar erro se o fifo ja existir
+            perror("Erro, o fifo já existe\n"); //Pode dar erro se o fifo ja existir
         } 
 
         //manda o nome do pipe para o servidor
-        write(fd_fifo, &pipe, sizeof(char)*5);
+        write(fd_fifo, &pipe, sizeof(pipe));
         close(fd_fifo);
 
         //formatar o nome do pipe para os servidor
@@ -122,12 +121,12 @@ int main(int argc, char *argv[]){
         int fd_fifo_novo = open(nome, O_WRONLY, 0666);
         //Manda o numero de programas a somar
         int numero_progs=argc-2;
-        write(fd_fifo_novo, &numero_progs, sizeof(int)); 
+        write(fd_fifo_novo, &numero_progs, sizeof(numero_progs)); 
         //Manda os varios programas a somar
         while(numero_progs>0){
             char nome[8];
-            strcpy(nome,argv[numero_progs+1]);
-            write(fd_fifo_novo, nome, sizeof(char)*8); //+1 = -2+1
+            strcpy(nome,argv[numero_progs+1]); //se tivermos 5 programas (o ultimo estara no argv[6] (5+1))
+            write(fd_fifo_novo, nome, sizeof(nome)); 
             numero_progs--;
         }
         close(fd_fifo_novo);
@@ -135,19 +134,19 @@ int main(int argc, char *argv[]){
         //Le do pipe o tempo 
         fd_fifo_novo = open(pipe, O_RDONLY, 0666);
         float tempo;
-        read(fd_fifo_novo,&tempo,sizeof(float));
+        read(fd_fifo_novo,&tempo,sizeof(tempo));
         close(fd_fifo_novo);
 
         //Formata a string que da o tempo
         char string_tempo[20]={};
         sprintf(string_tempo,"Tempo:%f\n",tempo);
-        write(1, &string_tempo, sizeof(char)*20); 
+        write(1, &string_tempo, sizeof(string_tempo)); 
 
     }else if(argc>1 && !strcmp(argv[1],"stats-command")){
         //No servidor vamos usar a opcao 3
-        escolhe_struct=3;
+        escolhe_opcao=3;
         int fd_fifo = open("./fifo", O_WRONLY, 0666); //abre o fifo em modo de escrita
-        write(fd_fifo, &escolhe_struct, sizeof(int));
+        write(fd_fifo, &escolhe_opcao, sizeof(escolhe_opcao));
 
         //cria o fifo com nome e manda para o servidor o nome do mesmo
         char pipe[5]={};
@@ -155,11 +154,11 @@ int main(int argc, char *argv[]){
 
         int fifo_novo;
         if((fifo_novo = mkfifo(pipe, 0666))<0){
-            perror("Erro\n"); //Pode dar erro se o fifo ja existir
+            perror("Erro, o fifo já existe\n"); //Pode dar erro se o fifo ja existir
         } 
 
         //manda o nome do pipe para o servidor
-        write(fd_fifo, &pipe, sizeof(char)*5);
+        write(fd_fifo, &pipe, sizeof(pipe));
         close(fd_fifo);
 
         //formatar o nome do pipe para os servidor
@@ -170,16 +169,16 @@ int main(int argc, char *argv[]){
         int fd_fifo_novo = open(nome, O_WRONLY, 0666);
         //Manda o numero de programas a ver se sao do tipo
         int numero_progs=argc-3;
-        write(fd_fifo_novo, &numero_progs, sizeof(int)); 
+        write(fd_fifo_novo, &numero_progs, sizeof(numero_progs)); 
         //Manda o programa a comparar
         char comando[8];
         strcpy(comando,argv[2]);
-        write(fd_fifo_novo, comando, sizeof(char)*8);
+        write(fd_fifo_novo, comando, sizeof(comando));
         //Manda os varios programas a somar
         while(numero_progs>0){
             char nome[8];
-            strcpy(nome,argv[numero_progs+2]);
-            write(fd_fifo_novo, nome, sizeof(char)*8); //+1 = -2+1
+            strcpy(nome,argv[numero_progs+2]); 
+            write(fd_fifo_novo, nome, sizeof(nome)); 
             numero_progs--;
         }
         close(fd_fifo_novo);
@@ -187,19 +186,19 @@ int main(int argc, char *argv[]){
         //Le do pipe o tempo 
         fd_fifo_novo = open(pipe, O_RDONLY, 0666);
         int vezes;
-        read(fd_fifo_novo,&vezes,sizeof(int));
+        read(fd_fifo_novo,&vezes,sizeof(vezes));
         close(fd_fifo_novo);
 
         //Formata a string que da o tempo
         char string_tempo[20]={};
         sprintf(string_tempo,"Vezes:%d\n",vezes);
-        write(1, &string_tempo, sizeof(char)*20); 
+        write(1, &string_tempo, sizeof(string_tempo)); 
     
     }else if(argc>1 && !strcmp(argv[1],"stats-uniq")){
         //No servidor vamos usar a opcao 4
-        escolhe_struct=4;
+        escolhe_opcao=4;
         int fd_fifo = open("./fifo", O_WRONLY, 0666); //abre o fifo em modo de escrita
-        write(fd_fifo, &escolhe_struct, sizeof(int));
+        write(fd_fifo, &escolhe_opcao, sizeof(escolhe_opcao));
 
         //cria o fifo com nome e manda para o servidor o nome do mesmo
         char pipe[5]={};
@@ -207,11 +206,11 @@ int main(int argc, char *argv[]){
 
         int fifo_novo;
         if((fifo_novo = mkfifo(pipe, 0666))<0){
-            perror("Erro\n"); //Pode dar erro se o fifo ja existir
+            perror("Erro, o fifo ja existe\n"); //Pode dar erro se o fifo ja existir
         } 
 
         //manda o nome do pipe para o servidor
-        write(fd_fifo, &pipe, sizeof(char)*5);
+        write(fd_fifo, &pipe, sizeof(pipe));
         close(fd_fifo);
 
         //formatar o nome do pipe para os servidor
@@ -222,12 +221,12 @@ int main(int argc, char *argv[]){
         int fd_fifo_novo = open(nome, O_WRONLY, 0666);
         //Manda o numero de programas a ver se sao diferentes
         int numero_progs=argc-2;
-        write(fd_fifo_novo, &numero_progs, sizeof(int)); 
+        write(fd_fifo_novo, &numero_progs, sizeof(numero_progs)); 
         //Manda os varios programas a somar
         while(numero_progs>0){
             char nome[8];
             strcpy(nome,argv[numero_progs+1]);
-            write(fd_fifo_novo, nome, sizeof(char)*8); //+1 = -2+1
+            write(fd_fifo_novo, nome, sizeof(nome)); 
             numero_progs--;
         }
         close(fd_fifo_novo);
@@ -235,11 +234,11 @@ int main(int argc, char *argv[]){
         //Le do pipe o tempo 
         fd_fifo_novo = open(pipe, O_RDONLY, 0666);
         int num_progs_difs;
-        read(fd_fifo_novo,&num_progs_difs,sizeof(int));
+        read(fd_fifo_novo,&num_progs_difs,sizeof(num_progs_difs));
 
         for(int i=0;i<num_progs_difs;i++){
             char programa_dif[8]={};
-            read(fd_fifo_novo,&programa_dif,sizeof(char)*8);
+            read(fd_fifo_novo,&programa_dif,sizeof(programa_dif));
             char string_formatada[19];
             sprintf(string_formatada,"Programa: %s\n",programa_dif);
             write(1, &string_formatada, sizeof(char)*14); 
@@ -247,9 +246,8 @@ int main(int argc, char *argv[]){
         close(fd_fifo_novo);
 
     }else{
-        char erro[]="Argumentos inválidos\n";
-        write(1, &erro, sizeof(char)*23);
-    
+        char erro[23]="Argumentos inválidos\n";
+        write(1, &erro, sizeof(erro));
     }
     return 0;
 }

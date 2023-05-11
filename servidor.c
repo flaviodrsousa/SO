@@ -23,45 +23,45 @@ typedef struct {
 typedef struct{ //para guardar os ficheiros das structs terminadas
     float tempo;
     char programa[5];
-    
 }ProgramaTerminado;
 
 int main(int argc, char const *argv[]){
     if(argc!=2){
-        perror("Erro\n");
+        perror("O servidor recebe como argumento uma diretoria onde guarda o seu conteudo\n");
         return 0;
     }
-    StructInicio estruturaInicio;//criar a struct
-    StructFim estruturaFim;//criar a struct
+    StructInicio estruturaInicio;//criar a struct que guarda o estado inicial do programa
+    StructFim estruturaFim;//criar a struct que guarda o estado final do programa
     ProgramaTerminado programaAcabado; //Inicializar struct que guarda conteudo do programa terminado
 
     int fifo;
-    if((fifo = mkfifo("./fifo", 0666))<0){
-        perror("Erro\n"); //Pode dar erro se o fifo ja existir
-    } //cria o fifo
-    int fd_txt = open("./txt.txt",O_CREAT|O_RDWR, 0666);//Onde o historico é guardado
-    int fd_aux = open("./aux.txt",O_CREAT|O_RDWR, 0666);//Aux para fazer a atualizacao do historcio
-    close(fd_txt);
+    if((fifo = mkfifo("./fifo", 0666))<0){ //cria o fifo
+        perror("Erro, o fifo já existe\n"); //Pode dar erro se o fifo ja existir
+    } 
+    int fd_historico = open("./historico.txt",O_CREAT|O_RDWR, 0666);//Onde o historico é guardado
+    int fd_aux = open("./aux.txt",O_CREAT|O_RDWR, 0666);//Aux para fazer a atualizacao do historico
+    close(fd_historico);
     close(fd_aux);
     
-    int escolhe_struct=0;
+    int escolhe_opcao=0;
     while(1) { //ciclo infinito
         int fd_fifo = open("./fifo", O_RDONLY, 0666); //abre o fifo
         
-        if((read(fd_fifo, &escolhe_struct, sizeof(int)))>0){
-            if(escolhe_struct==0){
-                int fd_txt = open("./txt.txt",O_WRONLY|O_TRUNC, 0666);
+        if((read(fd_fifo, &escolhe_opcao, sizeof(int)))>0){
+            if(escolhe_opcao==0){
+                int fd_historico = open("./historico.txt",O_WRONLY|O_TRUNC, 0666);
                 read(fd_fifo, &estruturaInicio, sizeof(StructInicio));
-                write(fd_txt, &estruturaInicio, sizeof(StructInicio));
-                close(fd_txt);
-            }else if(escolhe_struct==1){
+                write(fd_historico, &estruturaInicio, sizeof(StructInicio));
+                close(fd_historico);
+
+            }else if(escolhe_opcao==1){
                 int bytes_lidos;
                 read(fd_fifo, &estruturaFim, sizeof(StructFim));
                 //Quando acaba temos de remover a struct do historico
-                int fd_txt = open("./txt.txt",O_RDONLY, 0666);
+                int fd_historico = open("./historico.txt",O_RDONLY, 0666);
                 int fd_aux = open("./aux.txt",O_WRONLY, 0666);
                 //Faz uma copia para outro ficheiro do historico sem o que se tem de retirar
-                while(bytes_lidos=(read(fd_txt,&estruturaInicio,sizeof(StructInicio)))>0){
+                while(bytes_lidos=(read(fd_historico,&estruturaInicio,sizeof(StructInicio)))>0){
                     if(estruturaFim.pid!=estruturaInicio.pid){
                         write(fd_aux, &estruturaInicio, sizeof(StructInicio));
                     }else{
@@ -81,21 +81,21 @@ int main(int argc, char const *argv[]){
                         close(fd_prog_acabado);
                     }
                 }
-                close(fd_txt);
+                close(fd_historico);
                 close(fd_aux);
-                //Copia do auxiliar para o historico
-                fd_txt = open("./txt.txt",O_WRONLY, 0666);
-                fd_aux = open("./txt.txt",O_RDONLY, 0666);
+                //Copia do auxiliar para o historico (todos menos o programa que terminou, pois este não foi para o aux.txt)
+                fd_historico = open("./historico.txt",O_WRONLY, 0666);
+                fd_aux = open("./aux.txt",O_RDONLY, 0666);
                 while(bytes_lidos=(read(fd_aux,&estruturaInicio,sizeof(StructInicio)))>0){
-                      write(fd_txt, &estruturaInicio, sizeof(StructInicio));
+                      write(fd_historico, &estruturaInicio, sizeof(StructInicio));
                 }
-                close(fd_txt);
+                close(fd_historico);
                 close(fd_aux);
 
-            }else if(escolhe_struct==2){
+            }else if(escolhe_opcao==2){
                 //Le o pipe para onde tem de mandar
                 char pipe[7]={};
-                read(fd_fifo, &pipe, sizeof(char)*7);
+                read(fd_fifo, &pipe, sizeof(pipe));
 
                 //Le os varios argumentos do fifo
                 float tempo=0;
@@ -108,7 +108,7 @@ int main(int argc, char const *argv[]){
                 read(fd_fifo_novo, &num_prog, sizeof(int));
                 //Percorre os varios argumentos
                 while(num_prog>0){
-                    read(fd_fifo_novo,&programa,sizeof(char)*8);
+                    read(fd_fifo_novo,&programa,sizeof(programa));
                     //Ve qual o ficheiro que tem de abrir
                     char prog_acabado[30]={};
                     sprintf(prog_acabado,"%s/%s.txt",argv[1],programa);
@@ -125,13 +125,13 @@ int main(int argc, char const *argv[]){
                     
                 //Para mandar o tempo final para o cliente
                 fd_fifo_novo = open(pipe, O_WRONLY, 0666);
-                write(fd_fifo_novo,&tempo,sizeof(float));
+                write(fd_fifo_novo,&tempo,sizeof(tempo));
                 close(fd_fifo_novo);
 
-            }else if(escolhe_struct==3){
+            }else if(escolhe_opcao==3){
                 //Le o pipe para onde tem de mandar
                 char pipe[7]={};
-                read(fd_fifo, &pipe, sizeof(char)*7);
+                read(fd_fifo, &pipe, sizeof(pipe));
 
                 //Le os varios argumentos do fifo
                 int vezes_ocorre=0;
@@ -141,13 +141,13 @@ int main(int argc, char const *argv[]){
                 int fd_fifo_novo = open(pipe, O_RDONLY, 0666);
                 //Vai buscar o numero de argumentos
                 int num_prog;
-                read(fd_fifo_novo, &num_prog, sizeof(int));
+                read(fd_fifo_novo, &num_prog, sizeof(num_prog));
                 //Vai buscar o programa a comparar
                 char comando[8];
-                read(fd_fifo_novo, &comando, sizeof(char)*8);
+                read(fd_fifo_novo, &comando, sizeof(comando));
                 //Percorre os varios argumentos
                 while(num_prog>0){
-                    read(fd_fifo_novo,&programa,sizeof(char)*8);
+                    read(fd_fifo_novo,&programa,sizeof(programa));
                     //Ve qual o ficheiro que tem de abrir
                     char prog_acabado[30]={};
                     sprintf(prog_acabado,"%s/%s.txt",argv[1],programa);
@@ -167,10 +167,10 @@ int main(int argc, char const *argv[]){
                 write(fd_fifo_novo,&vezes_ocorre,sizeof(int));
                 close(fd_fifo_novo);
 
-            }else if(escolhe_struct==4){
+            }else if(escolhe_opcao==4){
                 //Le o pipe para onde tem de mandar
                 char pipe[7]={};
-                read(fd_fifo, &pipe, sizeof(char)*7);
+                read(fd_fifo, &pipe, sizeof(pipe));
 
                 //Le os varios argumentos do fifo
                 float tempo=0;
@@ -180,14 +180,14 @@ int main(int argc, char const *argv[]){
                 int fd_fifo_novo = open(pipe, O_RDONLY, 0666);
                 //Vai buscar o numero de argumentos
                 int num_prog;
-                read(fd_fifo_novo, &num_prog, sizeof(int));
+                read(fd_fifo_novo, &num_prog, sizeof(num_prog));
                 //Ve varios parametros
                 int programas_diferentes=0;
                 int encontrado=0;
                 char nome_diferentes[num_prog][8];
                 //Percorre os varios argumentos
                 while(num_prog>0){
-                    read(fd_fifo_novo,&programa,sizeof(char)*8);
+                    read(fd_fifo_novo,&programa,sizeof(programa));
                     //Ve qual o ficheiro que tem de abrir
                     char prog_acabado[30]={};
                     sprintf(prog_acabado,"%s/%s.txt",argv[1],programa);
@@ -212,13 +212,12 @@ int main(int argc, char const *argv[]){
                     
                 //Para mandar o tempo final para o cliente
                 fd_fifo_novo = open(pipe, O_WRONLY, 0666);
-                write(fd_fifo_novo,&programas_diferentes,sizeof(int));
+                write(fd_fifo_novo,&programas_diferentes,sizeof(programas_diferentes));
                 for(int i=0;i<programas_diferentes;i++){
                     write(fd_fifo_novo,nome_diferentes[i],sizeof(char)*8);
                 }
                 close(fd_fifo_novo);
             }
-
         }
         close(fd_fifo);
     }

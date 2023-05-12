@@ -11,3 +11,5 @@ s*
 *.txt
 
 fifo
+monitor
+target

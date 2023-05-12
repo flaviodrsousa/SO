@@ -97,6 +97,7 @@ int main(int argc, char *argv[]){
         char string_tempo[20]={};
         sprintf(string_tempo,"Tempo:%f\n",tempo);
         write(1, &string_tempo, sizeof(char)*20); 
+        unlink(fifo_novo);
     }else if(argc>1 && !strcmp(argv[1],"stats-command")){
         //No servidor vamos usar a opcao 3
         escolhe_opcao=3;
@@ -141,7 +142,7 @@ int main(int argc, char *argv[]){
         char string_tempo[20]={};
         sprintf(string_tempo,"Vezes:%d\n",vezes);
         write(1, &string_tempo, sizeof(char)*20); 
-
+        unlink(fifo_novo);
     }else if(argc>1 && !strcmp(argv[1],"stats-uniq")){
         //No servidor vamos usar a opcao 4
         escolhe_opcao=4;
@@ -192,7 +193,7 @@ int main(int argc, char *argv[]){
             write(1, &string_formatada, sizeof(char)*14); 
         }
         close(fd_fifo_novo);
-
+        unlink(fifo_novo);
     }else if((argc>3 && !strcmp(argv[1],"execute")) && !strcmp(argv[2],"-p")){
         int numProcessos = 0; // Número de comandos na pipeline
 
@@ -215,7 +216,6 @@ int main(int argc, char *argv[]){
             while (comandoFim < argc && strcmp(argv[comandoFim], "/")) {
                 comandoFim++;
             }
-
             // No caso de ser o primeiro programa, apenas temos de direcionar a saida
             if (i == 0) {
                 // Cria o pipe
@@ -300,7 +300,6 @@ int main(int argc, char *argv[]){
             }
             comandoInicio = comandoFim + 1;
         }
-
     }else{
         printf("Argumentos inválidos.\n");
         return 1;

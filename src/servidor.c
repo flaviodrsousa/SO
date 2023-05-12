@@ -102,9 +102,6 @@ int main(int argc, char const *argv[]){
                 fd_fifo_novo = open(pipe, O_WRONLY, 0666);
                 write(fd_fifo_novo,&tempo,sizeof(float));
                 close(fd_fifo_novo);
-
-                //Para nao ficar o pipe
-                unlink(pipe);
             }else if(escolhe_opcao==3){
                 //Le o pipe para onde tem de mandar
                 char pipe[7]={};
@@ -141,9 +138,6 @@ int main(int argc, char const *argv[]){
                 fd_fifo_novo = open(pipe, O_WRONLY, 0666);
                 write(fd_fifo_novo,&vezes_ocorre,sizeof(int));
                 close(fd_fifo_novo);
-
-                //Para nao ficar o pipe
-                unlink(pipe);
             }else if(escolhe_opcao==4){
                 //Le o pipe para onde tem de mandar
                 char pipe[7]={};
@@ -194,9 +188,6 @@ int main(int argc, char const *argv[]){
                     write(fd_fifo_novo,nome_diferentes[i],sizeof(char)*8);
                 }
                 close(fd_fifo_novo);
-
-                //Para nao ficar o pipe
-                unlink(pipe);
             }
         }
     }

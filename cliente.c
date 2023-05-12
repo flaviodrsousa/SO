@@ -7,33 +7,10 @@
 #include <stdlib.h>
 #include <sys/time.h>
 #include <string.h>
-typedef struct {
-    struct timeval tempo; //em milisegundos
-    pid_t pid;
-    char programa[5];
-} *Inicio,StructInicio;
-typedef struct {
-    struct timeval tempo; //em milisegundos
-    pid_t pid;
-} *Fim,StructFim;
-typedef struct{ //para guardar os ficheiros das structs terminadas
-    float tempo;
-    char programa[5];
-    
-}ProgramaTerminado;
-int mystrcmp(char *s1, char *s2){
-    int i = 0;
-    while (s1[i] == s2[i]) { // percorre as strings ate encontrar uma diferenca
-        if (s1[i] == '\0') { // as strings sao iguais ate o final
-            return 0;
-        }
-        i++;
-    }
-    // as strings sao diferentes a partir do indice i
-    return s1[i] - s2[i];
-}
+#include "estruturas.h"
+
 int main(int argc, char *argv[]){
-    int escolhe_struct=0;
+    int escolhe_opcao=0;
     if((argc>3 && !strcmp(argv[1],"execute")) && !strcmp(argv[2],"-u")){ //So faz no caso de ser execute -u ls l por exemplo
         StructInicio estruturaInicio;//criar a struct
         gettimeofday(&estruturaInicio.tempo, NULL);
@@ -41,8 +18,8 @@ int main(int argc, char *argv[]){
         strcpy(estruturaInicio.programa,argv[3]);
         
         int fifo = open("./fifo", O_WRONLY, 0666); //abre o fifo em modo de escrita
-        write(fifo, &escolhe_struct, sizeof(int));
-        write(fifo, &estruturaInicio, sizeof(StructInicio));//TIREI A CENA DO IF
+        write(fifo, &escolhe_opcao, sizeof(int));
+        write(fifo, &estruturaInicio, sizeof(StructInicio));
         close(fifo);
         int status;
         if (fork()==0){
@@ -52,11 +29,11 @@ int main(int argc, char *argv[]){
         wait(&status);
                     
         StructFim estruturaFim;//criar a struct
-        escolhe_struct=1;
+        escolhe_opcao=1;
         gettimeofday(&estruturaFim.tempo, NULL);
         estruturaFim.pid=getpid();
         fifo = open("./fifo", O_WRONLY, 0666); //abre o fifo em modo de escrita
-        write(fifo, &escolhe_struct, sizeof(int));
+        write(fifo, &escolhe_opcao, sizeof(int));
         write(fifo,&estruturaFim, sizeof(StructFim));
         close(fifo);
     }else if(argc==2 && !strcmp(argv[1],"status")){
@@ -82,18 +59,18 @@ int main(int argc, char *argv[]){
         close(fd_txt);
     }else if(argc>1 && !strcmp(argv[1],"stats-time")){
         //No servidor vamos usar a opcao 2
-        escolhe_struct=2;
+        escolhe_opcao=2;
         int fd_fifo = open("./fifo", O_WRONLY, 0666); //abre o fifo em modo de escrita
-        write(fd_fifo, &escolhe_struct, sizeof(int));
+        write(fd_fifo, &escolhe_opcao, sizeof(int));
         //cria o fifo com nome e manda para o servidor o nome do mesmo
-        char pipe[5]={};
+        char pipe[10]={};
         sprintf(pipe,"%i",getpid());//Cria o nome do pipe
         int fifo_novo;
         if((fifo_novo = mkfifo(pipe, 0666))<0){
             perror("Erro\n"); //Pode dar erro se o fifo ja existir
         } 
         //manda o nome do pipe para o servidor
-        write(fd_fifo, &pipe, sizeof(char)*5);
+        write(fd_fifo, &pipe, sizeof(char)*10);
         close(fd_fifo);
         //formatar o nome do pipe para os servidor
         char nome[7]={};
@@ -107,7 +84,7 @@ int main(int argc, char *argv[]){
         while(numero_progs>0){
             char nome[8];
             strcpy(nome,argv[numero_progs+1]);
-            write(fd_fifo_novo, nome, sizeof(char)*8); //+1 = -2+1
+            write(fd_fifo_novo, nome, sizeof(char)*8);
             numero_progs--;
         }
         close(fd_fifo_novo);
@@ -122,18 +99,18 @@ int main(int argc, char *argv[]){
         write(1, &string_tempo, sizeof(char)*20); 
     }else if(argc>1 && !strcmp(argv[1],"stats-command")){
         //No servidor vamos usar a opcao 3
-        escolhe_struct=3;
+        escolhe_opcao=3;
         int fd_fifo = open("./fifo", O_WRONLY, 0666); //abre o fifo em modo de escrita
-        write(fd_fifo, &escolhe_struct, sizeof(int));
+        write(fd_fifo, &escolhe_opcao, sizeof(int));
         //cria o fifo com nome e manda para o servidor o nome do mesmo
-        char pipe[5]={};
+        char pipe[10]={};
         sprintf(pipe,"%i",getpid());//Cria o nome do pipe
         int fifo_novo;
         if((fifo_novo = mkfifo(pipe, 0666))<0){
             perror("Erro\n"); //Pode dar erro se o fifo ja existir
         } 
         //manda o nome do pipe para o servidor
-        write(fd_fifo, &pipe, sizeof(char)*5);
+        write(fd_fifo, &pipe, sizeof(char)*10);
         close(fd_fifo);
         //formatar o nome do pipe para os servidor
         char nome[7]={};
@@ -151,7 +128,7 @@ int main(int argc, char *argv[]){
         while(numero_progs>0){
             char nome[8];
             strcpy(nome,argv[numero_progs+2]);
-            write(fd_fifo_novo, nome, sizeof(char)*8); //+1 = -2+1
+            write(fd_fifo_novo, nome, sizeof(char)*8);
             numero_progs--;
         }
         close(fd_fifo_novo);
@@ -167,12 +144,12 @@ int main(int argc, char *argv[]){
 
     }else if(argc>1 && !strcmp(argv[1],"stats-uniq")){
         //No servidor vamos usar a opcao 4
-        escolhe_struct=4;
+        escolhe_opcao=4;
         int fd_fifo = open("./fifo", O_WRONLY, 0666); //abre o fifo em modo de escrita
-        write(fd_fifo, &escolhe_struct, sizeof(int));
+        write(fd_fifo, &escolhe_opcao, sizeof(int));
 
         //cria o fifo com nome e manda para o servidor o nome do mesmo
-        char pipe[5]={};
+        char pipe[10]={};
         sprintf(pipe,"%i",getpid());//Cria o nome do pipe
 
         int fifo_novo;
@@ -181,7 +158,7 @@ int main(int argc, char *argv[]){
         } 
 
         //manda o nome do pipe para o servidor
-        write(fd_fifo, &pipe, sizeof(char)*5);
+        write(fd_fifo, &pipe, sizeof(char)*10);
         close(fd_fifo);
 
         //formatar o nome do pipe para os servidor
@@ -196,8 +173,8 @@ int main(int argc, char *argv[]){
         //Manda os varios programas a somar
         while(numero_progs>0){
             char nome[8];
-            strcpy(nome,argv[numero_progs+1]);
-            write(fd_fifo_novo, nome, sizeof(char)*8); //+1 = -2+1
+            strcpy(nome,argv[numero_progs+1]); 
+            write(fd_fifo_novo, nome, sizeof(char)*8); 
             numero_progs--;
         }
         close(fd_fifo_novo);
@@ -217,84 +194,115 @@ int main(int argc, char *argv[]){
         close(fd_fifo_novo);
 
     }else if((argc>3 && !strcmp(argv[1],"execute")) && !strcmp(argv[2],"-p")){
+        int numProcessos = 0; // Número de comandos na pipeline
 
-        // Localiza o índice do argumento que separa os comandos
-        int separatorIndex=-1;
-        for (int i=3; i<argc; i++) {
-            if (strcmp(argv[i],"/") == 0) {
-                separatorIndex = i;
-                break;
+        // Conta o número de comandos
+        for (int i = 3; i < argc; i++) {
+            if (strcmp(argv[i], "/") == 0) {
+                numProcessos++;
             }
         }
+        numProcessos++;
 
-        // Verifica se o separador foi encontrado
-        if (separatorIndex==-1 || separatorIndex==argc-1) {
-            write(1,"Argumentos inválidos.\n",sizeof(char)*24);
-            return 1;
-        }
+        int pipes[numProcessos - 1][2]; // Array de pipes
+        int comandoInicio = 3; // Índice do primeiro comando na pipeline
+        int comandoFim=comandoInicio;
+        // Cria os pipes
+        for (int i = 0; i < numProcessos; i++) {
+            comandoFim = comandoInicio;
 
-        int pipefd[2];
-        pid_t pid;
-
-        // Cria o pipe
-        if(pipe(pipefd)==-1){
-            perror("pipe");
-            return 1;
-        }
-
-        // Cria um processo filho para executar o segundo comando
-        pid = fork();
-
-        if(pid < 0) {
-            perror("fork");
-            return 1;
-        }else if(pid == 0){
-            // Código do processo filho (segundo comando)
-            close(pipefd[1]);  // Fecha a extremidade de escrita do pipe
-
-            // Redireciona a leitura do pipe para a entrada padrão (stdin)
-            dup2(pipefd[0], STDIN_FILENO);
-
-            // Fecha a extremidade de leitura do pipe
-            close(pipefd[0]);
-
-            // Constrói o vetor de argumentos para o segundo comando
-            char *secondCommandArgs[argc - separatorIndex];
-            for(int i = separatorIndex + 1; i < argc; i++) {
-                secondCommandArgs[i - separatorIndex - 1] = argv[i];
+            // Encontra o índice do próximo comando
+            while (comandoFim < argc && strcmp(argv[comandoFim], "/")) {
+                comandoFim++;
             }
-            secondCommandArgs[argc - separatorIndex - 1] = NULL;
 
-            // Executa o segundo comando especificado pelo argumento
-            execvp(secondCommandArgs[0], secondCommandArgs);
+            // No caso de ser o primeiro programa, apenas temos de direcionar a saida
+            if (i == 0) {
+                // Cria o pipe
+                if (pipe(pipes[i]) < 0) {
+                    perror("pipe");
+                    _exit(1);
+                }
+                if (fork() == 0) {
+                    // CÓDIGO DO FILHO
+                    close(pipes[i][0]); // fechar o descritor de leitura
+                    dup2(pipes[i][1], 1); // direcionar o output para o descritor de escrita
+                    close(pipes[i][1]); // uma vez que não vai ser usado
 
-            perror("execvp");
-            exit(1); // Termina o processo filho
-        }else{
-            // Código do processo pai (primeiro comando)
-            close(pipefd[0]);  // Fecha a extremidade de leitura do pipe
+                    // Criar o array com os argumentos
+                    int tamanho = comandoFim - comandoInicio;
+                    char *argumentos[tamanho + 1];
+                    for (int i = 0; i < tamanho; i++) {
+                        argumentos[i] = argv[comandoInicio + i];
+                    }
+                    argumentos[tamanho] = NULL;
+                    execvp(argv[comandoInicio], argumentos);
+                }
+                close(pipes[i][1]); // fechar o descritor de escrita do pai
+                int status;
+                wait(&status);
+            }else if (i > 0 && i <= numProcessos - 2) {
+                // Cria o pipe
+                if (pipe(pipes[i]) < 0) {
+                    perror("pipe");
+                    _exit(1);
+                }
+                if (fork() == 0) {
+                    // CÓDIGO DO FILHO
+                    close(pipes[i][0]); // fechar o descritor de leitura do pipe atual
 
-            // Redireciona a saída padrão (stdout) para a escrita no pipe
-            dup2(pipefd[1], STDOUT_FILENO);
+                    dup2(pipes[i - 1][0], 0); // direcionar o input para pipe anterior
+                    close(pipes[i - 1][0]); // uma vez que não vai ser usado
 
-            // Fecha a extremidade de escrita do pipe
-            close(pipefd[1]);
+                    dup2(pipes[i][1], 1); // direcionar o output para o descritor de escrita
+                    close(pipes[i][1]); // uma vez que não vai ser usado
 
-            // Constrói o vetor de argumentos para o primeiro comando
-            char *firstCommandArgs[separatorIndex - 2];
-            for(int i = 3; i < separatorIndex; i++){
-                firstCommandArgs[i - 3] = argv[i];
+                    // Criar o array com os argumentos
+                    int tamanho = comandoFim - comandoInicio;
+                    char *argumentos[tamanho + 1];
+                    for (int i = 0; i < tamanho; i++) {
+                        argumentos[i] = argv[comandoInicio + i];
+                    }
+                    argumentos[tamanho] = NULL;
+                    execvp(argv[comandoInicio], argumentos);
+
+                    _exit(1);
+                }
+                close(pipes[i - 1][0]); // fechar o descritor de leitura do pipe anterior
+                close(pipes[i][1]); // fechar o descritor de escrita do pipe atual
+                int status;
+                wait(&status);
+            } else if (i + 1 == numProcessos) {
+                // Cria o pipe
+                if (pipe(pipes[i]) < 0) {
+                    perror("pipe");
+                    _exit(1);
+                }
+                if (fork() == 0) {
+                    // CÓDIGO DO FILHO
+
+                    dup2(pipes[i - 1][0], 0); // direcionar o input para o pipe anterior
+                    close(pipes[i - 1][0]); // uma vez que não vai ser usado
+
+                    // Criar o array com os argumentos
+                    int tamanho = argc - comandoInicio;
+                    char *argumentos[tamanho + 1];
+                    for (int i = 0; i < tamanho; i++) {
+                        argumentos[i] = argv[comandoInicio + i];
+                    }
+                    argumentos[tamanho] = NULL;
+                    execvp(argv[comandoInicio], argumentos);
+                    _exit(1);
+                }
+                close(pipes[i - 1][0]); // fechar o descritor de leitura do pipe anterior
+                int status;
+                wait(&status);
             }
-            firstCommandArgs[separatorIndex - 3] = NULL;
-
-            // Executa o primeiro comando especificado pelo argumento
-            execvp(firstCommandArgs[0], firstCommandArgs);
-
-            perror("execvp");
-            exit(1); // Termina o processo pai
-        }   
+            comandoInicio = comandoFim + 1;
+        }
 
     }else{
-        char erro[]="Argumentos inválidos\n";
+        printf("Argumentos inválidos.\n");
+        return 1;
     }
 }

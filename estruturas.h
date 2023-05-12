@@ -1,6 +1,9 @@
 #ifndef ESTRUTURAS_H
 #define ESTRUTURAS_H
 
+#include <unistd.h>
+#include <sys/time.h>
+
 typedef struct {
     struct timeval tempo; //em milisegundos
     pid_t pid;

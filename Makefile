@@ -7,13 +7,13 @@ folders:
 
 monitor: obj/servidor.o
 	@gcc -g obj/servidor.o -o monitor
-obj/servidor.o: src/servidor.c
-	@gcc -g -c src/servidor.c -o obj/servidor.o -I include
+obj/servidor.o: servidor.c
+	@gcc -g -c servidor.c -o obj/servidor.o 
 
 target: obj/cliente.o
 	@gcc -g obj/cliente.o -o target
-obj/cliente.o: src/cliente.c
-	@gcc -g -c src/cliente.c -o obj/cliente.o -I include
+obj/cliente.o: cliente.c
+	@gcc -g -c cliente.c -o obj/cliente.o 
 
 clean:
 	@rm -f obj/* PIDS-folder/* 
